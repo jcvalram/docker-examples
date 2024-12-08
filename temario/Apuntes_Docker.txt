@@ -1,0 +1,650 @@
+DOCKER
+######
+
+1. COMANDOS BASICOS
+   ################
+
+- docker run [nombre_imagen]:
+  Descarga una imagen, crear el contenedor y lo arranca.
+
+  Ejemplos:
+
+  Arranca un contenedor con la opción de darle un nombre
+  docker run --name [nombre_que_le_doy] [nombre_imagen]
+
+  Arranca un contenedor interactivo
+  docker run -it [nombre_imagen]
+ 
+  Arranca un contenedor en background
+  docker run -d [nombre_imagen]
+  
+  Arranca un contenedor y cuando se para, se elimina automáticamente
+  docker --rm [nombre_imagen]
+
+- docker start
+  Correr un contenedor creado.
+
+  docker start [contendor_id]
+
+  docker start [nombre_contendor]
+
+- docker stop
+  Parar un contenedor.
+
+  docker stop [contenedor_id]
+
+  docker stop [nombre_contenedor]
+
+- docker rm
+  Borrar un contenedor.
+
+  docker rm [nombre_contenedor]
+
+  docker rm [contenedor_id]
+
+- docker exec
+  Ejecutar comandos sobre el contenedor.
+
+  docker exec -it [nombre_contenedor] [comando]
+
+  Ejemplos:
+
+  docker exec -it ubuntu bash
+
+  docker exec -it ubuntu date
+
+- docker ps
+  Mostrar lista de contenedores:
+
+  docker ps
+  Muestra los contenedores arrancados.
+
+  docker ps -a
+  Muestra todos los contenedores, arrancados y parados.
+  
+  docker ps -l
+  Muestra el último contenedor.
+
+- docker images
+  Muestra todas las imágenes descargadas.
+
+- docker rmi:
+  Borra una imagen.
+
+  docker rmi [nombre_imagen]
+  Borra una imagen siempre y cuando no esté siendo utilizada por un contenedor.
+
+  docker rmi -f [nombre_imagen]:[tag]
+  Borra la imagen forznado a parar el contenedor que la está usando.
+
+- docker pull:
+  Descarga una imagen.
+
+  docker pull [nombre_imagen]
+
+- Echarle un ojo a docker container y docker image
+
+- docker logs:
+  Muestra los logs de un contenedor.
+  
+  docker logs [contendor_id] -> Muestra todos
+  
+  docker logs [contendor_id] --tail 10 -> Muestra las últimas 10 líneas
+  
+  docker logs [contendor_id] -f -> Va mostrando los logs de forma continua
+  
+- docker kill:
+  Mata un contenedor.
+  
+  docker kill [contenedor_id]
+  
+- docker top:
+  Mostrar proceso que más consume en un contendor.
+
+  docker top [nombre_contenedor]
+  
+ - docker stats:
+  Muestra información de recursos del contenedor. Por ejemplo: uso de la cpu, uso 
+  de memoria, límite de uso, etc.
+ 
+  docker stats [contenedor_id]
+  
+- docker inspect
+  Recuperar información sobre una imagen o contenedor, a nivel de características y
+  propiedades.
+  
+  docker inspect [contenedor_id] -> Muestra en la consola todas las propiedades.
+  
+  docker inspect [contenedor_id] > [nombre_fichero] -> Envía toda la información a 
+  un fichero.
+  
+  docker inspect [image_id]
+  
+2. REDES
+   #####
+   
+  Descargamos imagen nginx (servidor web)
+  docker pull nginx
+   
+  docker run -d -P nginx
+  Crea y arranca el contenedor y genera automáticamente el puerto de acceso al contenedor.
+   
+  docker run -d --name mi_nginx -p 8080:80 nginx
+  Crea y arranca el contenedor especificando el puerto de acceso al contenedor.
+   
+  docker network
+  Información sobre las redes de docker.
+  
+  docker network ls -> Lista las redes de docker. La red bridge es la red que se usa
+  por defecto.
+  
+  docker network inspect [nombre_red] -> Muestra información detallada de la red, como
+  ip, puertos y contenedores añadidos a dicha red.
+  
+  docker network create [nombre_red]
+  Crea una nueva red, por defecto usa el driver bridge si no se especifica.
+  
+  docker network create --subnet 192.168.0.0/16 [nombre_red]
+  Crea una red especificando el rango de direcciones ip.
+  
+  docker run -it --name [nombre_contenedor] --network [nombre_red] [nombre_imagen]
+  Crea y arranca un contenedor asociado a una red.
+  
+  docker network connect [nombre_red] [nombre_contenedor]
+  Conecta en caliente el contenedor arrancado a otra red. No reemplaza la conexión
+  anterior a otra red, sino que se mantiene la anterior y se añade el nuevo.
+  
+  docker network disconnect [nombre_red] [nombre_contenedor]
+  Desconecta el contenedor arrancado a la red.
+  
+  Ejemplo contendor mysql
+  docker run --name mysql_wp --rm --network red1 -e MYSQL_ROOT_PASSWORD=secret -d mysql:5.7
+  BBDD Mysql
+
+  docker exec -it mysql_wp mysql -p (Ejecuta comando para logarse y entrar a la BBDD)
+  
+  docker run -it --name mysql_client --rm --network red1 mysql:5.7 bash
+  Cliente Mysql
+  mysql -h mysql_wp -u root -p (Conexión a la BBDD)
+  
+  docker network rm [nombre_red] -> Borra un red.
+  
+3. VOLUMENES
+   #########
+  
+  docker volume
+  
+  docker run -it -v /home/jcvalram/dir1:/dir1 --name ubuntu2 ubuntu
+  Creación de un enlace para compartir datos entre un directorio del host y un
+  directorio del contenedor.
+  
+  docker volume create vol1
+  docker run -it --name ubuntu7 -v vol1:/dir1 ubuntu bash
+  Crea un volumen y luego crea un contenedor asociando el volumen creado a la
+  carpeta correspondiente del contenedor
+  
+  docker volume rm [volume_id]
+  docker volume prune
+  
+4. CREAR Y GESTIONAR IMAGENES
+
+  docker commit [nombre_contenedor] [nombre_imagen]
+  Crea una imagen a partir de un contenedor
+  
+  Ejemplo de creación de imagen con Dockerfile:
+  
+  Dockerfile:
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  
+  docker build -t image_python .
+  Creamos la imagen a partir del Dockerfile
+  
+  docker run -it imagen_python python
+  Crea y arranca un contenedor con la imagen creada y además ejecuta python
+  
+  docker image history [nombre_image]
+  Muestra el historial de las instrucciones que componen la imagen.
+  
+  - Comando RUN
+  #############
+  Permite ejecutar instrucciones para la creación de la imagen.
+  
+  Ejemplo Dockerfile
+  
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+			&& apt-get install -y iputils-ping
+  En esta última línea podemos ejecutar varias instrucciones separando con '&&'.
+  La '\' indica que se continua las instrucciones en la siguiente línea.
+  
+  docker run -it --rm image_python:v1 bash
+  Creamos el contenedor con la imagen creada.
+  
+  - Comando CMD
+  #############
+  Permite ejecutar un comando al arrancar el contenedor.
+  
+  Ejemplo Dockerfile
+  
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+        && apt-get install -y iputils-ping
+  CMD echo "Welcome to this container"
+  
+  En la última línea ejecuta el comando echo pero a través de una bash
+  
+  docker build -t image:v1
+  Creamos imagen a partir del Dockerfile
+  
+  docker run -it --rm image:v1
+  Creamos el contenedor con la imagen creada y muestra el resultado: 
+   Welcome to this container
+	
+  CMD ["echo","Welcome to this container"]
+  De esta forma ejecuta el comando echo con el mismo texto pero sin hacerlo
+  desde la bash. Es la forma correcta.
+  
+  Aunque estén definidos varios CMD, sólo se ejecuta el último.
+  
+  - Comando ENTRYPOINT
+  ####################
+  Ejecuta un comando al arrancar el contenedor, pero con la diferencia de que se
+  asegura que se ejecuta ese comando siempre.
+  
+  Ejemplo Dockerfile:
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+        && apt-get install -y iputils-ping
+  CMD ["/bin/bash"]
+  
+  Con la última línea de CMD deberá ejecutar la bash al arrancar el contenedor.
+  
+  docker run -it --rm image:v2 ls
+  Cuando arrancamos el contenedor a partir de la imagen creada, se le pasa el 
+  comando 'ls' para que se ejecute después de arrancar el contenedor.
+  Por tanto no ejecuta el comando del CMD que viene en la imagen.
+  
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+        && apt-get install -y iputils-ping
+  ENTRYPOINT ["/bin/bash"]
+  
+  De esta forma nos aseguramos que aunque se le pase un comando distinto como 
+  parámetro al crear el contenedor, no va permitir su ejecución.
+  
+  Ejemplo de opción de comando:
+  ENTRYPOINT ["ls"]
+  Para este caso si se crea un contenedor de esta forma: 
+  docker run -it --rm image:v2 -l
+  
+  Crea el contenedor y le sumaría la opción incluida pasado como parámetro y
+  ejecutaría un ls -l.
+  
+  Aunque estén definidos varios ENTRYPOINT, sólo se ejecuta el último.
+  
+  - Comando WORKDIR
+  #################
+  Establece el directorio de trabajo donde se almacenan lo que queramos.
+  
+  Ejemplo:
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+        && apt-get install -y iputils-ping
+  RUN mkdir /datos
+  WORKDIR /datos
+  RUN touch f1.txt
+  RUN mkdir /datos1
+  WORKDIR /datos1
+  RUN touch f2.txt
+  ENTRYPOINT ["/bin/bash"]
+  
+  Con esta imagen creada, al crear un contenedor crea la carpeta /datos, lo establece
+  como directorio de trabajo con WORKDIR, luego crea un fichero f1.txt en la carpeta 
+  de trabajo.
+  Luego crea otro directorio /datos1 y crea otro fichero f2.txt, que se guarda en la 
+  última carpeta de trabajo establecida con WORKDIR y finalmente se queda en esta 
+  última carpeta.
+  
+  - Comando COPY-ADD
+  ##################
+  Permiten copiar ficheros/carpetas. Con el ADD al copiar ficheros .tar, lo
+  descomprime y lo copia en la carpeta destino.
+  
+  Ejemplo Dockerfile:
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+        && apt-get install -y iputils-ping
+  ## WORKDIR ##
+  RUN mkdir /datos
+  WORKDIR /datos
+  RUN touch f1.txt
+  RUN mkdir /datos1
+  WORKDIR /datos1
+  RUN touch f2.txt
+  ## COPY ##
+  COPY index.html .
+  COPY app.log /datos
+  ## ADD ##
+  ADD docs docs
+  ADD f* /datos/
+  ADD f.tar .
+  ## ENTRYPOINT ##
+  ENTRYPOINT ["/bin/bash"]
+  
+  - Comando ENV
+  #############
+  Define las variables de entorno.
+  
+  docker run -it --rm --env x=10 image:v4
+  Se puede definir una variable de entorno pasándolo como parámetro al crear un
+  contenedor con la opción 'env' y a continuación [nombre_variable] = [valor].
+
+  Ejemplo Dockerfile:
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+        && apt-get install -y iputils-ping
+  ## ENV ##
+  ENV dir=/data dir1=/data1
+  RUN mkdir $dir && mkdir $dir1
+  ## ENTRYPOINT ##
+  ENTRYPOINT ["/bin/bash"]
+  
+  - Comando ARG
+  ##############
+  Permite pasar variables al construir la imagen.
+  
+  Ejemplo Dockerfile:
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+        && apt-get install -y iputils-ping
+  ## WORKDIR ##
+  RUN mkdir /datos
+  WORKDIR /datos
+  RUN touch f1.txt
+  RUN mkdir /datos1
+  WORKDIR /datos1
+  RUN touch f2.txt
+  ## COPY ##
+  COPY index.html .
+  COPY app.log /datos
+  ## ENV ##
+  ENV dir=/data dir1=/data1
+  RUN mkdir $dir && mkdir $dir1
+  ## ARG ##
+  ARG dir2
+  RUN mkdir $dir2
+  ## ENTRYPOINT ##
+  ENTRYPOINT ["/bin/bash"]
+  
+  docker build -t image:v6 --build-arg dir2=/data2 .
+  Construye la imagen y le pasamos el valor del argumento dir2 definido 
+  en el Dockerfile.
+  
+  docker run -it --rm image:v6
+  Simplemente creamos y arrancamos el contenedor.
+  
+  Ejemplo de paso de argumento para ejecutar un fichero dentro del contenedor.
+  
+  Creación de fichero ejecutable: add_user.sh
+  adduser $user_docker -> Añade un usuario con la variable $user_docker.
+  
+  Creación de Dockerfile con argumento para pasarlo al fichero ejecutable:
+  
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+        && apt-get install -y iputils-ping
+  ## WORKDIR ##
+  RUN mkdir /datos
+  WORKDIR /datos
+  RUN touch f1.txt
+  RUN mkdir /datos1
+  WORKDIR /datos1
+  RUN touch f2.txt
+  ## COPY ##
+  COPY index.html .
+  COPY app.log /datos
+  ## ENV ##
+  ENV dir=/data dir1=/data1
+  RUN mkdir $dir && mkdir $dir1
+  ## ARG ##
+  ARG dir2
+  RUN mkdir $dir2
+  ## Argumento user ##
+  ARG user
+  ENV user_docker $user  -> Se define la variable user_docker con el valor del
+  ADD add_user.sh /datos1      argumento user.
+  RUN /datos1/add_user.sh -> Ejecuta el fichero
+  ## ENTRYPOINT ##
+  ENTRYPOINT ["/bin/bash"]
+  
+  docker build -t image:v6 --build-arg dir2=/data2 --build-arg user=tom .
+  Crea la imagen pasando el valor de los argumentos dir2 y user.
+  
+  docker run -it --rm image:v6
+  Creamos el contenedor y una vez dentro ejecutamos el comando: cat /etc/passwd 
+  para comprobar el nuevo usuario creado.
+  
+  - Comando EXPOSE
+  ################
+  Permite exponer puertos, indica que en la imagen existe un puerto que puede ser
+  utilizado.
+  
+  Ejemplo Dockerfile
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+        && apt-get install -y iputils-ping
+  ## WORKDIR ##
+  RUN mkdir /datos
+  WORKDIR /datos
+  RUN touch f1.txt
+  RUN mkdir /datos1
+  WORKDIR /datos1
+  RUN touch f2.txt
+  ## COPY ##
+  COPY index.html .
+  COPY app.log /datos
+  ## ADD ##
+  ADD docs docs
+  ADD f* /datos/
+  ADD f.tar .
+  ## ENV ##
+  ENV dir=/data dir1=/data1
+  RUN mkdir $dir && mkdir $dir1
+  ## EXPOSE ##
+  RUN apt-get install -y apache2
+  EXPOSE 80
+  ADD entrypoint.sh /datos1
+  CMD /datos/entrypoint.sh
+  ## ENTRYPOINT ##
+  ENTRYPOINT ["/bin/bash"]
+  
+  docker build -t image:v7 .
+  Construye la imagen
+  
+  docker run -it --rm -p 8080:80 image:v7
+  Crea el contenedor mapeando el puerto expuesto 80 al puerto exterior 8080. 
+  
+  - Comando VOLUME
+  ################
+  Permite construir un volumen para el contenedor.
+  
+  Ejemplo Dockerfile:
+  FROM ubuntu
+  RUN apt-get update
+  RUN apt-get install -y python
+  RUN echo 1.0 >> ./version && apt-get install -y git \
+        && apt-get install -y iputils-ping
+  ## WORKDIR ##
+  RUN mkdir /datos
+  WORKDIR /datos
+  RUN touch f1.txt
+  RUN mkdir /datos1
+  WORKDIR /datos1
+  RUN touch f2.txt
+  ## COPY ##
+  COPY index.html .
+  COPY app.log /datos
+  ## ADD ##
+  ADD docs docs
+  ADD f* /datos/
+  ADD f.tar .
+  ## ENV ##
+  ENV dir=/data dir1=/data1
+  RUN mkdir $dir && mkdir $dir1
+  ## EXPOSE ##
+  RUN apt-get install -y apache2
+  EXPOSE 80
+  ADD entrypoint.sh /datos1
+  ## VOLUME ##
+  ADD paginas /var/www/html
+  VOLUME ["/var/www/html"]
+  ## CMD ##
+  CMD /datos/entrypoint.sh
+  ## ENTRYPOINT ##
+  ENTRYPOINT ["/bin/bash"]
+  
+  docker build -t image:v8 .
+  Contruye la imagen
+  
+  docker run -it --rm -p 8080:80 -name c1 image:v8
+  Construye el contenedor mapeando el puerto y con nombre c1.
+  
+  docker run -it --rm -p 9080:80 --volumes-from c1 --name c2 image:v8
+  Construye un contendor con otro puerto 9080 mapeando el puerto público 80 y
+  además se asocia el volumen del contendor c1.
+  
+  - SUBIR IMAGENES
+  ################
+  Antes de subirlo a Docker Hub hay que darle formato y tenemos que estar logados
+  a nuestro usuario.
+  
+  docker image tag image:v1 jcvalram/image:v1 --> Formato
+  docker push jcvalram/image:v1				  --> Subida a Docker Hub
+  
+  - DOCKER COMPOSE
+  ################
+  Es un ejecutable que organiza u orquesta los contendores. A partir de un fichero
+  .yaml se configura los contenedores que van a pertenecer al stack de desarrollo.
+  
+  docker-compose up -> Ejecuta el fichero docker-compose creando todos los 
+  contenedores (servicios).
+  
+  docker-compose down -> Para todos los contenedores y además borra los contenedores, 
+  las redes.
+  
+  docker-compose ps -> Muestra los contenedores arrancados/parados.
+  
+  docker-compose config --services -> Mostrar los contenedores levantados.
+  
+  docker-compose logs [nombre-servicio] -> Muestra los logs del contenedor.
+  
+  docker-compose top [nombre-servicio] -> Muestra los procesos más pesados del servicio.
+  
+  docker-compose pause -> Para temporalmente todos los servicios.
+  
+  docker-compose unpause -> Vuelve a activar los servicios, tras la pausa.
+  
+  docker-compose restart -> Reseta los serivicios.
+  
+  docker-compose stop -> Para todos los servicios.
+  
+  docker-compose rm -> Puede borrar todos los contenedores (servicios).
+  
+  docker-compose exec [nombre-contenedor] [comando]
+  
+  Dentro de docker-compose
+  volumes:
+	type: volume -> Crea un directorio dentro de la carpeta de volumes del host
+	type: bind -> Asocia un directorio de la máquina a un directorio del contenedor.
+  
+  DOCKER REGISTRY
+  ###############
+  Descargar la imagen registry oficial.
+  docker pull registry
+  
+  Creamos un contenedor con la imagen
+  docker run -d -p 5000:5000 --name registro1 registry
+  
+  Formateamos la imagen para poder subirlo a nuestro registro, indicando nombre
+  de la máquina y puerto.
+  docker tag ubuntu localhost:5000/mi_ubuntu
+  
+  Subimos la nueva imagen formateada
+  docker push localhost:5000/mi_ubuntu
+  
+  Descargar la imagen subida
+  docker pull localhost:5000/mi_ubuntu
+  
+  DOCKER SWARM
+  ############
+  Nodo: Máquina física o máquina virtual.
+  Cluster: Conjunto de nodos, donde hay nodos managers y nodos workers (esclavos).
+  
+  Iniciar un cluster de docker en un nodo
+  docker swarm init
+  docker swarn init --advertise-addr [direccion-ip] -> En caso de tener más de una ip
+  
+  docker swarm join 
+  --token SWMTKN-1-2b8fxupfuwti3um3lgb3vj13826xwkik6yzlsx73vyxu18idjb-4p4x71d6u168muwqlj7gavzg5 192.168.65.3:2377
+  Añadir un nodo worker al cluster
+  
+  docker service create --replicas 1 --name servicio1 [nombre_imagen]
+  Crea un servicio donde se le pasa una imagen para crear un contenedor.
+  El servicio pertenece al nodo manager y el contenedor se construye por lo general
+  en un nodo worker.
+  
+  docker service scale servicio1=3 (número de replicas)
+  Escalar un servicio o replicar un servicio.
+  
+  docker service
+  Comando para realizar operaciones con los servicios. (Ver opciones)
+  Ejemplos:
+	 docker service ps [nombre_servicio]
+	 Muestra información del servicio como: estad del servicio,
+	 nodos donde están los contenedores corriendo, imagen del contenedor creado.
+	 
+	 docker service ls
+	 Muestra la lista de servicios con información como: nombre, número de replicas, etc.
+
+  docker service rm [nombre_servicio]
+  
+  docker node
+  Comando para realizar disitintas operaciones con los nodos.(Ver opciones)
+  
+KUBERNETES
+##########
+ 
+ kubectl expose deployments/[nombre_deployment] --type="NodePort" --port 80
+ Crea un servicio basado en un despliegue, de tipo NodePort, es decir que accede
+ a través de un puerto y especifica el puerto.
+ 
+ kubectl get services
+ Muestra la lista de servicios.
+ 
+ kubectl scale deployments/[nombre_deployment] --replicas=3
+ Escala el número de deployments.
+ 
+ 
+ 
